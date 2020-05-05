@@ -59,6 +59,7 @@ class FastXposed(IScript):
             return self.basicTypeMap[param[depth]] + "[]" * depth + ".class"
 
     basicTypeMap = {'C': u'char',
+                    'B': u'byte',
                     'D': u'double',
                     'F': u'float',
                     'I': u'int',
