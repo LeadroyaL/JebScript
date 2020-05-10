@@ -1,4 +1,3 @@
-#?shortcut=Shift+G
 # author = LeadroyaL
 
 from com.pnfsoftware.jeb.client.api import IScript, IGraphicalClientContext, IUnitView, IUnitFragment

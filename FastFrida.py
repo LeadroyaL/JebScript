@@ -3,30 +3,18 @@
 from com.pnfsoftware.jeb.client.api import IScript, IGraphicalClientContext
 from com.pnfsoftware.jeb.core.units.code.java import IJavaSourceUnit
 
-FMT_NO_PARAMS = """XposedHelpers.findAndHookMethod("%s", classLoader, "%s", new XC_MethodHook() {
-    @Override
-    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-        super.beforeHookedMethod(param);
-    }
-    @Override
-    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-        super.afterHookedMethod(param);
-    }
-});"""
-
-FMT_WITH_PARAMS = """XposedHelpers.findAndHookMethod("%s", classLoader, "%s", %s, new XC_MethodHook() {
-    @Override
-    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-        super.beforeHookedMethod(param);
-    }
-    @Override
-    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-        super.afterHookedMethod(param);
-    }
-});"""
+FMT = """Java.use("{class_name}")
+    .{method_name}
+    .overload({param_list})
+    .implementation = function (this, ...args) {{ // for javascript
+    // .implementation = function (this: Java.Wrapper, ...args: any[]) {{ // for typescript
+        console.log("before hooked {method_sig}");
+        this.{method_name}({args_list});
+        console.log("after hooked {method_sig}");
+    }};"""
 
 
-class FastXposed(IScript):
+class FastFrida(IScript):
     def run(self, ctx):
         if not isinstance(ctx, IGraphicalClientContext):
             print ('This script must be run within a graphical client')
@@ -36,30 +24,31 @@ class FastXposed(IScript):
             return
         sig = ctx.getFocusedView().getActiveFragment().getActiveAddress()
         clz, method = sig.split("->")
+        assert isinstance(clz, unicode)
         assert isinstance(method, unicode)
-        methodName = method[0:method.index('(')]
         params = self.split(method[method.index('(') + 1:method.index(')')])
-        if len(params) == 0:
-            print FMT_NO_PARAMS % (
-                clz[1:-1].replace('/', '.'),
-                methodName)
-        else:
-            print FMT_WITH_PARAMS % (
-                clz[1:-1].replace('/', '.'), methodName,
-                ','.join([self.toXposed(x) for x in params]))
+        print FMT.format(
+            class_name=clz[1:-1].replace('/', '.'),
+            method_name=method[0:method.index('(')],
+            method_sig=sig,
+            param_list=','.join([self.toFrida(x) for x in params]),
+            args_list=self.gen_args(params))
 
-    def toXposed(self, param):
-        depth = 0
-        while param[depth] == '[':
-            depth += 1
+    def gen_args(self, params):
+        return ','.join(['args[%d]' % i for i in range(len(params))])
+
+    def toFrida(self, param):
+        # input: [I, return: "[I"
+        # input: [Ljava/lang/String; return: "[Ljava.lang.String;"
+        if param[0] == '[':
+            return '"' + param.replace('/', '.') + '"'
         # input: Ljava/lang/String; return: "java.lang.String"
-        # input: [Ljava/lang/String; return: "java.lang.String[]"
-        if param[-1] == ';':
-            return '"' + param[depth + 1:-1].replace('/', '.') + '"' + "[]" * depth
-        # input: I, return: int.class
-        # input: [I, return: int[].class
+        # input: I, return: "int"
         else:
-            return self.basicTypeMap[param[depth]] + "[]" * depth + ".class"
+            if param[-1] == ';':
+                return '"' + param[1:-1].replace('/', '.') + '"'
+            else:
+                return '"' + self.basicTypeMap[param[0]] + '"'
 
     basicTypeMap = {'C': u'char',
                     'B': u'byte',
