@@ -20,6 +20,8 @@
 
 ![](img/2.png)
 
+![](img/3.png)
+
 ## 其他人写的有用的工具
 
 [https://raw.githubusercontent.com/S3cuRiTy-Er1C/JebScripts](https://raw.githubusercontent.com/S3cuRiTy-Er1C/JebScripts) 通过sourceInfo恢复类名，兼容jeb2和jeb3的API
