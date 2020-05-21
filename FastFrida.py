@@ -9,8 +9,9 @@ FMT = """Java.use("{class_name}")
     .implementation = function (this, ...args) {{ // for javascript
     // .implementation = function (this: Java.Wrapper, ...args: any[]) {{ // for typescript
         console.log("before hooked {method_sig}");
-        this.{method_name}({args_list});
+        let ret = this.{method_name}({args_list});
         console.log("after hooked {method_sig}");
+        return ret;
     }};"""
 
 
