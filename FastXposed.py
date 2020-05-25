@@ -55,7 +55,7 @@ class FastXposed(IScript):
         # input: Ljava/lang/String; return: "java.lang.String"
         # input: [Ljava/lang/String; return: "java.lang.String[]"
         if param[-1] == ';':
-            return '"' + param[depth + 1:-1].replace('/', '.') + '"' + "[]" * depth
+            return '"' + param[depth + 1:-1].replace('/', '.') + "[]" * depth + '"'
         # input: I, return: int.class
         # input: [I, return: int[].class
         else:
